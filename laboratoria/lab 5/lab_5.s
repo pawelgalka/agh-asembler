@@ -79,24 +79,28 @@ _start:
 	.type do_something,@function
 
 do_something:
-	MOV	count,%rdx		# outer loop counter
+	mov	count,%r14
+	dec	%r14
+
+	#MOV	count,%rdx		# outer loop counter
 	MOVQ	$0,events
+	mov	$0,%rdx
 outer:		
-	DEC	%rdx
-	XOR	%rsi,%rsi		# data index
-	MOV	%rdx,%rcx		# inner loop counter
+	MOV	$0,%rcx		# inner loop counter
 inner:		
-	MOV	table(,%rsi,4),%eax
-	CMP	table+4(,%rsi,4),%eax
+	MOV	table(,%rcx,4),%eax
+	CMP	table+4(,%rcx,4),%eax
 	JBE	noswap
-	XCHG	table+4(,%rsi,4),%eax
-	MOV	%eax,table(,%rsi,4)
+	XCHG	table+4(,%rcx,4),%eax
+	MOV	%eax,table(,%rcx,4)
 	INCQ	events
 noswap:		
-	INC	%rsi			# next element
-	LOOP	inner			# { rcx--; if( rcx ) goto inner }
-	CMP	$1,%rdx
-	JNZ	outer
+	inc	%rcx
+	cmp	%rcx,%r14
+	jne	inner
+	inc	%rdx
+	cmp	%r14,%rdx
+	JNE	outer
 
 	RET
 
@@ -146,7 +150,7 @@ disp_item:
 
 make_string:
 	MOVL	$0x20202020,number
-	MOVL	$0x2020,number
+	MOVL	$0x2020,line_no
 	MOV	%esi,%eax		# convert index of table element to string
 	MOV	$line_no + 2,%rdi
 	CALL	n2str
